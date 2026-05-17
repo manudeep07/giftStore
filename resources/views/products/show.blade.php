@@ -9,14 +9,35 @@
         $hero = $primary ? $product->imageUrl($primary->path) : null;
     @endphp
 
-    <div class="grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
+    @push('head')
+        <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    @endpush
+
+    <div class="grid gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-start" x-data="customGiftConfigurator(@js($customDefaults), @js($initialQuote), @js($optionMeta), @js(route('products.quote', $product)))">
         <div class="space-y-6 lg:sticky lg:top-28">
             <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl ring-1 ring-slate-900/5">
-                @if ($hero)
-                    <img src="{{ $hero }}" alt="{{ $primary->alt ?? $product->name }}" class="aspect-[4/5] w-full object-cover" id="hero-preview" />
-                @else
-                    <div class="aspect-[4/5] w-full bg-gradient-to-br from-slate-100 via-white to-slate-200"></div>
-                @endif
+                <div class="relative w-full aspect-[4/5] overflow-hidden bg-slate-100 flex items-center justify-center">
+                    @if ($hero)
+                        <img src="{{ $hero }}" alt="{{ $primary->alt ?? $product->name }}" 
+                             class="absolute inset-0 h-full w-full object-cover transition-all duration-500" 
+                             :style="materialFilterStyle"
+                             id="hero-preview" />
+                    @else
+                        <div class="absolute inset-0 bg-gradient-to-br from-slate-100 via-white to-slate-200"></div>
+                    @endif
+
+                    <!-- Visual Configurator Overlay -->
+                    <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-8 transition-all duration-300 text-center z-10">
+                        <template x-if="uploadPreview && has_image_upload">
+                            <img :src="uploadPreview" class="w-3/4 max-h-[50%] object-contain rounded shadow-lg mix-blend-multiply opacity-90 mb-6 transition-all duration-300" />
+                        </template>
+
+                        <p x-show="custom_text" 
+                           class="whitespace-pre-wrap break-words w-full transition-all duration-300"
+                           :style="textOverlayStyle"
+                           x-text="custom_text"></p>
+                    </div>
+                </div>
 
                 <div class="border-t border-slate-100 bg-slate-50 p-6">
                     <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Live preview</p>
@@ -60,7 +81,12 @@
             <div class="space-y-3">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $product->category?->name }}</p>
                 <div class="flex flex-wrap items-start justify-between gap-4">
-                    <h1 class="font-[family-name:var(--font-serif)] text-4xl font-semibold text-slate-900" style="--font-serif:'Fraunces',ui-serif,Georgia,serif;">{{ $product->name }}</h1>
+                    <div class="flex items-center gap-3">
+                        <h1 class="font-[family-name:var(--font-serif)] text-4xl font-semibold text-slate-900" style="--font-serif:'Fraunces',ui-serif,Georgia,serif;">{{ $product->name }}</h1>
+                        @if($product->stock <= 0)
+                            <span class="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold uppercase tracking-widest text-rose-600">Out of Stock</span>
+                        @endif
+                    </div>
                     @auth
                         <form action="{{ route('wishlist.toggle', $product) }}" method="post">
                             @csrf
@@ -73,10 +99,7 @@
                 <p class="text-base leading-relaxed text-slate-600">{{ $product->description }}</p>
             </div>
 
-            <div
-                class="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg ring-1 ring-slate-900/5"
-                x-data="customGiftConfigurator(@js($customDefaults), @js($initialQuote), @js($optionMeta), @js(route('products.quote', $product)))"
-            >
+            <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg ring-1 ring-slate-900/5">
                 <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-6">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Instant quote</p>
@@ -193,8 +216,12 @@
                             @change="handleUploadPreview($event)" />
                     </div>
 
-                    <button type="submit" class="w-full rounded-2xl bg-white px-6 py-3 text-sm font-semibold text-slate-900 shadow-lg shadow-black/10 ring-1 ring-white/40 transition hover:-translate-y-0.5">
-                        Add bespoke configuration · ₹<span x-text="quote.unit_price"></span>
+                    <button type="submit" @if($product->stock <= 0) disabled @endif class="w-full rounded-2xl {{ $product->stock <= 0 ? 'bg-slate-200 text-slate-500 cursor-not-allowed shadow-none' : 'bg-white text-slate-900 shadow-lg shadow-black/10 hover:-translate-y-0.5' }} px-6 py-3 text-sm font-semibold ring-1 ring-white/40 transition">
+                        @if($product->stock <= 0)
+                            Out of Stock
+                        @else
+                            Add bespoke configuration · ₹<span x-text="quote.unit_price"></span>
+                        @endif
                     </button>
                     @guest
                         <p class="text-center text-xs text-white/70">Create an account at checkout to unlock wishlists & tracking.</p>
@@ -271,6 +298,47 @@
                     const group = this.optionMeta.color ?? [];
                     const found = group.find((opt) => opt.value_key === this.color);
                     return found?.meta?.hex ?? null;
+                },
+                get materialFilterStyle() {
+                    let filter = '';
+                    
+                    // Leather tinting
+                    if (this.color === 'black') {
+                        filter += 'grayscale(1) brightness(0.8) ';
+                    } else if (this.color === 'brown') {
+                        filter += 'sepia(0.2) saturate(1.2) ';
+                    }
+                    
+                    // Wood tinting
+                    if (this.material === 'walnut') {
+                        filter += 'sepia(0.3) contrast(1.1) brightness(0.9) ';
+                    } else if (this.material === 'oak') {
+                        filter += 'sepia(0.1) saturate(0.9) ';
+                    }
+
+                    return filter ? `filter: ${filter.trim()}; transition: filter 0.3s ease;` : 'filter: none; transition: filter 0.3s ease;';
+                },
+                get textOverlayStyle() {
+                    let style = '';
+                    
+                    if (this.font === 'script_velvet') {
+                        style += "font-family: 'Dancing Script', cursive; font-size: 3.5rem; line-height: 1.2; ";
+                    } else {
+                        style += "font-family: 'Inter', sans-serif; font-size: 1.5rem; letter-spacing: 0.15em; font-weight: 500; text-transform: uppercase; ";
+                    }
+
+                    const hex = this.selectedColorHex || '#1e293b';
+                    style += `color: ${hex}; `;
+                    
+                    if (hex.toLowerCase() === '#c49a6c' || hex.toLowerCase() === '#d4af37') {
+                        style += `text-shadow: 1px 1px 2px rgba(0,0,0,0.4), -1px -1px 1px rgba(255,255,255,0.3); opacity: 0.95; `;
+                    } else if (this.engraving === 'deep') {
+                        style += `mix-blend-mode: multiply; opacity: 0.85; text-shadow: inset 1px 1px 2px rgba(0,0,0,0.5); `;
+                    } else {
+                        style += `mix-blend-mode: multiply; opacity: 0.75; text-shadow: 0px 1px 1px rgba(255,255,255,0.3); `;
+                    }
+
+                    return style;
                 },
                 toggleAddon(key) {
                     if (this.addons.includes(key)) {

@@ -45,99 +45,194 @@ class CustomGiftSeeder extends Seeder
             ],
         );
 
-        $keepsakes = Category::query()->updateOrCreate(
-            ['slug' => 'heirloom-keepsakes'],
-            [
-                'name' => 'Heirloom Keepsakes',
-                'description' => 'Archival woods, brass trims, and engraving-ready surfaces.',
-                'sort_order' => 1,
-            ],
+        $jewelry = Category::query()->updateOrCreate(
+            ['slug' => 'engraved-jewelry'],
+            ['name' => 'Engraved Jewelry', 'description' => 'Delicate, timeless pieces tailored with your personal touch.', 'sort_order' => 1]
         );
 
-        $desk = Category::query()->updateOrCreate(
-            ['slug' => 'desk-rituals'],
-            [
-                'name' => 'Desk Rituals',
-                'description' => 'Quiet luxury objects for founders who live in Notion.',
-                'sort_order' => 2,
-            ],
+        $leather = Category::query()->updateOrCreate(
+            ['slug' => 'leather-goods'],
+            ['name' => 'Leather Goods', 'description' => 'Premium full-grain leather, monogrammed to perfection.', 'sort_order' => 2]
         );
 
-        $celebration = Category::query()->updateOrCreate(
-            ['slug' => 'celebration-kits'],
-            [
-                'name' => 'Celebration Kits',
-                'description' => 'Modular bundles for milestones worth photographing.',
-                'sort_order' => 3,
-            ],
+        $drinkware = Category::query()->updateOrCreate(
+            ['slug' => 'premium-drinkware'],
+            ['name' => 'Premium Drinkware', 'description' => 'Aesthetic, laser-engraved flasks and mugs.', 'sort_order' => 3]
+        );
+
+        $home = Category::query()->updateOrCreate(
+            ['slug' => 'home-living'],
+            ['name' => 'Home & Living', 'description' => 'Bespoke decor, custom clocks, and keepsakes for your space.', 'sort_order' => 4]
+        );
+
+        $tech = Category::query()->updateOrCreate(
+            ['slug' => 'tech-accessories'],
+            ['name' => 'Tech Accessories', 'description' => 'Personalized cases for the tools you use every day.', 'sort_order' => 5]
         );
 
         $productsConfig = [
+            // Engraved Jewelry
             [
-                'category' => $keepsakes,
-                'name' => 'Monolith Keepsake Chest',
-                'slug' => 'monolith-keepsake-chest',
-                'description' => 'Stackable walnut chest with floating hinge hardware and dual suede liners.',
-                'base_price' => 5200,
-                'stock' => 18,
+                'category' => $jewelry,
+                'name' => 'Signature Name Necklace',
+                'slug' => 'signature-name-necklace',
+                'description' => 'A delicate 18k gold-plated chain featuring a custom name or word of your choice.',
+                'base_price' => 3500,
+                'stock' => 50,
                 'is_featured' => true,
                 'badge_label' => 'Bestseller',
-                'image' => 'https://images.unsplash.com/photo-1513519245088-0e12902e35ca?auto=format&fit=crop&w=1200&q=80',
+                'image' => 'products/necklace.png',
             ],
             [
-                'category' => $keepsakes,
-                'name' => 'Constellation Glass Keepsake',
-                'slug' => 'constellation-glass-keepsake',
-                'description' => 'Hand-blown borosilicate orb etched with astral coordinates.',
+                'category' => $jewelry,
+                'name' => 'Coordinates Bar Bracelet',
+                'slug' => 'coordinates-bar-bracelet',
+                'description' => 'A sleek metal bar bracelet engraved with the exact coordinates of your special place.',
                 'base_price' => 2800,
-                'stock' => 32,
+                'stock' => 30,
                 'is_featured' => false,
                 'badge_label' => null,
-                'image' => 'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
+                'image' => 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=1200&q=80',
             ],
             [
-                'category' => $desk,
-                'name' => 'Telemetry Desk Totem',
-                'slug' => 'telemetry-desk-totem',
-                'description' => 'CNC aluminum desk sculpture with modular magnet glyphs.',
-                'base_price' => 1850,
-                'stock' => 6,
-                'is_featured' => true,
-                'badge_label' => 'Low stock',
-                'image' => 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1200&q=80',
-            ],
-            [
-                'category' => $desk,
-                'name' => 'Analog Decision Coin',
-                'slug' => 'analog-decision-coin',
-                'description' => 'Weighted brass coin for irreversible yes/no moments.',
-                'base_price' => 890,
-                'stock' => 120,
+                'category' => $jewelry,
+                'name' => 'Custom Engraved Pocket Watch',
+                'slug' => 'custom-engraved-pocket-watch',
+                'description' => 'A vintage-style mechanical pocket watch, perfect for groomsmen or anniversaries. Engravable back casing.',
+                'base_price' => 4500,
+                'stock' => 15,
                 'is_featured' => false,
-                'badge_label' => null,
-                'image' => 'https://images.unsplash.com/photo-1522312346379-d1e52e2b99ab?auto=format&fit=crop&w=1200&q=80',
+                'badge_label' => 'Vintage',
+                'image' => 'https://images.unsplash.com/photo-1509048191080-d2984bad6ae5?auto=format&fit=crop&w=1200&q=80',
             ],
+
+            // Leather Goods
             [
-                'category' => $celebration,
-                'name' => 'Ribbonwave Celebration Crate',
-                'slug' => 'ribbonwave-celebration-crate',
-                'description' => 'Modular crate system with textile layers + edible inserts.',
-                'base_price' => 3400,
-                'stock' => 24,
+                'category' => $leather,
+                'name' => 'Monogrammed Minimalist Wallet',
+                'slug' => 'monogrammed-minimalist-wallet',
+                'description' => 'A premium slim full-grain leather cardholder featuring your initials in gold or silver foil.',
+                'base_price' => 1800,
+                'stock' => 100,
                 'is_featured' => true,
-                'badge_label' => 'Editor’s pick',
-                'image' => 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?auto=format&fit=crop&w=1200&q=80',
+                'badge_label' => 'Essential',
+                'image' => 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&w=1200&q=80',
             ],
             [
-                'category' => $celebration,
-                'name' => 'Saffron Afterparty Capsule',
-                'slug' => 'saffron-afterparty-capsule',
-                'description' => 'Curated scent + sound capsule with NFC dedication playlist.',
-                'base_price' => 2100,
+                'category' => $leather,
+                'name' => 'Classic Leather Artisan Journal',
+                'slug' => 'classic-leather-artisan-journal',
+                'description' => 'A refillable leather notebook perfect for writers or travelers. Custom embossed cover.',
+                'base_price' => 2200,
                 'stock' => 40,
                 'is_featured' => false,
                 'badge_label' => null,
-                'image' => 'https://images.unsplash.com/photo-1467810563316-b5476525c6f9?auto=format&fit=crop&w=1200&q=80',
+                'image' => 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=1200&q=80',
+            ],
+            [
+                'category' => $leather,
+                'name' => 'Personalized Leather Keychain',
+                'slug' => 'personalized-leather-keychain',
+                'description' => 'A sturdy leather loop with heavy metal hardware, engraved with initials or a short date.',
+                'base_price' => 850,
+                'stock' => 200,
+                'is_featured' => false,
+                'badge_label' => null,
+                'image' => 'products/keychain.png',
+            ],
+
+            // Home & Living
+            [
+                'category' => $home,
+                'name' => 'Custom Engraved Wooden Wall Clock',
+                'slug' => 'custom-engraved-wooden-wall-clock',
+                'description' => 'A beautifully crafted oak or walnut clock engraved with a family name and established year.',
+                'base_price' => 5500,
+                'stock' => 20,
+                'is_featured' => true,
+                'badge_label' => 'New',
+                'image' => 'https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?auto=format&fit=crop&w=1200&q=80',
+            ],
+            [
+                'category' => $home,
+                'name' => 'Personalized Acrylic Photo Frame',
+                'slug' => 'personalized-acrylic-photo-frame',
+                'description' => 'A modern, thick acrylic block where your photo is printed directly onto the glass alongside a custom caption.',
+                'base_price' => 2100,
+                'stock' => 60,
+                'is_featured' => false,
+                'badge_label' => null,
+                'image' => 'products/frame.png',
+            ],
+            [
+                'category' => $home,
+                'name' => 'Custom Star Map Print',
+                'slug' => 'custom-star-map-print',
+                'description' => 'A framed poster showing the exact alignment of the stars at a specific location, date, and time.',
+                'base_price' => 3200,
+                'stock' => 45,
+                'is_featured' => false,
+                'badge_label' => null,
+                'image' => 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=1200&q=80',
+            ],
+            [
+                'category' => $home,
+                'name' => 'Personalized Oak Cutting Board',
+                'slug' => 'personalized-oak-cutting-board',
+                'description' => 'A heavy, premium wood cutting board engraved with a family crest or name.',
+                'base_price' => 4200,
+                'stock' => 25,
+                'is_featured' => false,
+                'badge_label' => null,
+                'image' => 'products/board.png',
+            ],
+
+            // Drinkware
+            [
+                'category' => $drinkware,
+                'name' => 'Matte Black Thermal Flask',
+                'slug' => 'matte-black-thermal-flask',
+                'description' => 'A sleek, vacuum-insulated water bottle featuring your laser-engraved name.',
+                'base_price' => 1500,
+                'stock' => 80,
+                'is_featured' => true,
+                'badge_label' => 'Editor’s pick',
+                'image' => 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=1200&q=80',
+            ],
+            [
+                'category' => $drinkware,
+                'name' => 'Frosted Glass Coffee Mug',
+                'slug' => 'frosted-glass-coffee-mug',
+                'description' => 'An aesthetic, heavy-bottomed frosted mug custom printed with a quote or inside joke.',
+                'base_price' => 950,
+                'stock' => 150,
+                'is_featured' => false,
+                'badge_label' => null,
+                'image' => 'products/mug.png',
+            ],
+
+            // Tech Accessories
+            [
+                'category' => $tech,
+                'name' => 'Personalized Wood Phone Case',
+                'slug' => 'personalized-wood-phone-case',
+                'description' => 'Real walnut or cherry wood phone cases, precision laser engraved with your design.',
+                'base_price' => 2400,
+                'stock' => 70,
+                'is_featured' => false,
+                'badge_label' => null,
+                'image' => 'https://images.unsplash.com/photo-1601593346740-925612772716?auto=format&fit=crop&w=1200&q=80',
+            ],
+            [
+                'category' => $tech,
+                'name' => 'Monogrammed Leather Airpods Case',
+                'slug' => 'monogrammed-leather-airpods-case',
+                'description' => 'A snug-fitting leather case for Airpods, stamped with your initials.',
+                'base_price' => 1200,
+                'stock' => 110,
+                'is_featured' => false,
+                'badge_label' => null,
+                'image' => 'https://images.unsplash.com/photo-1603351154351-5e2d0600bb77?auto=format&fit=crop&w=1200&q=80',
             ],
         ];
 
@@ -169,7 +264,7 @@ class CustomGiftSeeder extends Seeder
 
             CustomizationOption::query()->where('product_id', $product->id)->delete();
 
-            $this->seedOptions($product);
+            $this->seedOptions($product, $payload['category']->slug);
         }
 
         Coupon::query()->updateOrCreate(
@@ -184,7 +279,7 @@ class CustomGiftSeeder extends Seeder
             ],
         );
 
-        $heroProduct = Product::query()->where('slug', 'monolith-keepsake-chest')->first();
+        $heroProduct = Product::query()->where('slug', 'signature-name-necklace')->first();
 
         if ($heroProduct) {
             Review::query()->updateOrCreate(
@@ -201,7 +296,7 @@ class CustomGiftSeeder extends Seeder
             );
         }
 
-        $sampleProduct = Product::query()->where('slug', 'telemetry-desk-totem')->first();
+        $sampleProduct = Product::query()->where('slug', 'monogrammed-minimalist-wallet')->first();
 
         if ($sampleProduct) {
             $order = Order::query()->create([
@@ -233,10 +328,8 @@ class CustomGiftSeeder extends Seeder
                 'quantity' => 2,
                 'customization_snapshot' => [
                     'selections' => [
-                        'material' => 'machined_aluminum',
-                        'size' => 'compact',
-                        'gift_wrap' => 'atelier',
-                        'addons' => ['nfc_chip'],
+                        'color' => 'brown',
+                        'font' => 'sans_precision',
                     ],
                 ],
                 'unit_price' => 2800,
@@ -261,33 +354,51 @@ class CustomGiftSeeder extends Seeder
     }
 
     /** @return void */
-    protected function seedOptions(Product $product): void
+    protected function seedOptions(Product $product, string $categorySlug): void
     {
-        $rows = [
-            ['material', 'walnut_arch', 'Walnut arch grain', 420, null, true],
-            ['material', 'obsidian_resin', 'Obsidian resin hybrid', 760, null, false],
+        $rows = [];
 
-            ['size', 'compact', 'Petite · desk footprint', 0, null, true],
-            ['size', 'atelier', 'Atelier scale · statement', 340, null, false],
-
-            ['color', 'natural_oil', 'Natural oil finish', 0, ['hex' => '#c49a6c'], true],
-            ['color', 'graphite', 'Graphite vapor', 190, ['hex' => '#2f3137'], false],
-
-            ['font', 'sans_precision', 'Neo-grotesk precision', 0, null, true],
-            ['font', 'script_velvet', 'Velvet script', 120, null, false],
-
-            ['gift_wrap', 'studio', 'Studio tissue + wax seal', 0, null, true],
-            ['gift_wrap', 'atelier', 'Atelier ribbonwave crate', 390, null, false],
-
-            ['engraving', 'none', 'No engraving', 0, null, true],
-            ['engraving', 'standard', 'Standard fiber etch', 180, null, false],
-            ['engraving', 'deep', 'Deep relief engraving', 420, null, false],
-
-            ['addon', 'ribbon_dupioni', 'Dupioni ribbon sash', 240, null, false],
-            ['addon', 'nfc_chip', 'Programmable NFC medallion', 320, null, false],
-
-            ['image_upload', 'yes', 'Archival photo conservation', 180, null, false],
+        // Universal Font Options
+        $fontOptions = [
+            ['font', 'sans_precision', 'Modern Sans', 0, null, true],
+            ['font', 'script_velvet', 'Elegant Cursive', 50, null, false],
         ];
+
+        switch ($categorySlug) {
+            case 'engraved-jewelry':
+                $rows = array_merge($fontOptions, [
+                    ['color', 'silver', 'Classic Silver', 0, ['hex' => '#e2e8f0'], true],
+                    ['color', 'gold', '18k Gold Plated', 500, ['hex' => '#d4af37'], false],
+                    ['color', 'rose_gold', 'Rose Gold', 500, ['hex' => '#b76e79'], false],
+                ]);
+                break;
+
+            case 'leather-goods':
+                $rows = array_merge($fontOptions, [
+                    ['color', 'brown', 'Cognac Brown', 0, ['hex' => '#8b4513'], true],
+                    ['color', 'black', 'Midnight Black', 0, ['hex' => '#1a1a1a'], false],
+                ]);
+                break;
+
+            case 'home-living':
+            case 'tech-accessories':
+                $rows = array_merge($fontOptions, [
+                    ['material', 'walnut', 'Walnut Wood', 0, null, true],
+                    ['material', 'oak', 'Classic Oak', 0, null, false],
+                ]);
+                break;
+
+            case 'premium-drinkware':
+                $rows = array_merge($fontOptions, [
+                    ['color', 'matte_black', 'Matte Black', 0, ['hex' => '#222222'], true],
+                    ['color', 'frosted', 'Frosted White', 0, ['hex' => '#f8f9fa'], false],
+                ]);
+                break;
+                
+            default:
+                $rows = $fontOptions;
+                break;
+        }
 
         foreach ($rows as $index => $row) {
             [$group, $key, $label, $price, $meta, $default] = $row;

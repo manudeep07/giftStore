@@ -110,6 +110,10 @@ class CheckoutController extends Controller
                     'unit_price' => $item->unit_price,
                     'line_total' => $item->line_total,
                 ]);
+
+                if ($item->product) {
+                    $item->product->decrement('stock', $item->quantity);
+                }
             }
 
             Payment::query()->create([

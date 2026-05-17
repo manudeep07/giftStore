@@ -26,7 +26,15 @@
                         <td class="px-6 py-4 font-semibold">{{ $product->name }}</td>
                         <td class="px-6 py-4 text-xs text-slate-400">{{ $product->category?->name }}</td>
                         <td class="px-6 py-4 text-xs">₹{{ number_format($product->base_price, 2) }}</td>
-                        <td class="px-6 py-4 text-xs">{{ $product->stock }}</td>
+                        <td class="px-6 py-4 text-xs">
+                            @if($product->stock <= 0)
+                                <span class="rounded bg-rose-500/20 px-2 py-1 font-bold text-rose-300 border border-rose-500/30">Out of Stock (0)</span>
+                            @elseif($product->stock <= 5)
+                                <span class="rounded bg-amber-500/20 px-2 py-1 font-bold text-amber-300 border border-amber-500/30">Low ({{ $product->stock }})</span>
+                            @else
+                                <span class="text-slate-300">{{ $product->stock }}</span>
+                            @endif
+                        </td>
                         <td class="px-6 py-4 text-right text-xs font-semibold">
                             <a href="{{ route('admin.products.edit', $product) }}" class="text-white hover:underline">Edit</a>
                             <form action="{{ route('admin.products.destroy', $product) }}" method="post" class="inline pl-3" onsubmit="return confirm('Archive SKU?');">
