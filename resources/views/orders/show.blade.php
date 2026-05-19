@@ -8,13 +8,33 @@
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Order</p>
                 <h1 class="font-[family-name:var(--font-serif)] text-4xl font-semibold text-slate-900" style="--font-serif:'Fraunces',ui-serif,Georgia,serif;">{{ $order->order_number }}</h1>
-                <p class="mt-2 text-sm text-slate-600 capitalize">Status · {{ $order->status }}</p>
+                <p class="mt-2 text-sm text-slate-600 capitalize">Order status · <span class="font-semibold">{{ $order->status }}</span></p>
+                <p class="text-sm text-slate-600 capitalize">Payment · <span class="font-semibold">{{ $order->payment?->status ?? 'n/a' }}</span></p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex flex-wrap gap-3">
+                @if ($order->payment && $order->payment->status === 'pending')
+                    <a href="{{ route('checkout.pay', $order) }}" class="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500">Pay now</a>
+                @endif
+                @can('cancel', $order)
+                    <form action="{{ route('orders.cancel', $order) }}" method="post" onsubmit="return confirm('Cancel this order?');">
+                        @csrf
+                        <button type="submit" class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100">Cancel order</button>
+                    </form>
+                @endcan
                 <a href="{{ route('orders.invoice', $order) }}" class="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-900 hover:border-slate-300">Invoice</a>
                 <a href="{{ route('orders.index') }}" class="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800">All orders</a>
             </div>
         </div>
+
+        @if ($order->status === 'cancelled' && $order->payment?->status === 'paid' && ! $order->refund)
+            <p class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">Cancellation received. Refund is pending — our team will process it shortly.</p>
+        @endif
+
+        @if ($order->refund)
+            <p class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                Refund processed · ₹{{ number_format($order->refund->amount, 2) }} ({{ $order->refund->reference }})
+            </p>
+        @endif
 
         <div class="grid gap-6 lg:grid-cols-2">
             <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -34,8 +54,9 @@
 
             <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 class="text-lg font-semibold text-slate-900">Payment</h2>
-                <p class="mt-4 text-sm text-slate-600">Provider · {{ $order->payment?->provider }}</p>
-                <p class="text-sm text-slate-600">Reference · {{ $order->payment?->transaction_ref }}</p>
+                <p class="mt-4 text-sm text-slate-600">Provider · {{ $order->payment?->provider ?? '—' }}</p>
+                <p class="text-sm text-slate-600 capitalize">Status · {{ $order->payment?->status ?? 'n/a' }}</p>
+                <p class="text-sm text-slate-600">Reference · {{ $order->payment?->transaction_ref ?? 'Awaiting payment' }}</p>
                 <p class="mt-4 text-3xl font-semibold text-slate-900">₹{{ number_format($order->total, 2) }}</p>
             </section>
         </div>
@@ -52,7 +73,6 @@
                             </div>
                             <p class="text-lg font-semibold text-slate-900">₹{{ number_format($item->line_total, 2) }}</p>
                         </div>
-                        <pre class="mt-3 overflow-x-auto rounded-xl bg-white p-3 text-xs text-slate-600">{{ json_encode($item->customization_snapshot, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
                     </article>
                 @endforeach
             </div>

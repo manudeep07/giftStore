@@ -55,10 +55,14 @@
                     <input name="coupon_code" value="{{ old('coupon_code', $summary['coupon_code']) }}" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm shadow-inner uppercase" placeholder="WELCOME10" />
                 </label>
 
-                <button type="submit" class="w-full rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-slate-900/15 transition hover:bg-slate-800">
-                    Pay ₹{{ number_format($summary['total'], 2) }} · Secure placeholder gateway
+                <button type="submit" class="w-full rounded-2xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-xl shadow-slate-900/15 transition hover:bg-slate-800" @disabled(! ($razorpayConfigured ?? false))>
+                    Continue to Razorpay · ₹{{ number_format($summary['total'], 2) }}
                 </button>
-                <p class="text-center text-xs text-slate-500">Psst — swap the payment factory inside <code class="rounded bg-slate-100 px-2 py-1 text-[11px]">CheckoutController</code> for Razorpay/Stripe.</p>
+                @unless ($razorpayConfigured ?? false)
+                    <p class="text-center text-xs text-amber-700">Add <code class="rounded bg-amber-50 px-1">RAZORPAY_KEY_ID</code> and <code class="rounded bg-amber-50 px-1">RAZORPAY_KEY_SECRET</code> to <code class="rounded bg-amber-50 px-1">.env</code> (see HANDOFF.md).</p>
+                @else
+                    <p class="text-center text-xs text-slate-500">You will complete payment on the next screen. Stock is reserved after payment succeeds.</p>
+                @endunless
             </form>
         </div>
 

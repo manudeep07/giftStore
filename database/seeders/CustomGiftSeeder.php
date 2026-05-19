@@ -338,11 +338,11 @@ class CustomGiftSeeder extends Seeder
 
             Payment::query()->create([
                 'order_id' => $order->id,
-                'provider' => 'placeholder',
+                'provider' => 'razorpay',
                 'status' => 'paid',
-                'transaction_ref' => 'SIM-'.strtoupper(Str::random(10)),
+                'transaction_ref' => 'pay_seed_'.strtoupper(Str::random(8)),
                 'amount' => $order->total,
-                'meta' => ['note' => 'Auto-generated analytics seed.'],
+                'meta' => ['note' => 'Seeded paid order for admin analytics.'],
             ]);
 
             Coupon::query()->where('code', 'WELCOME10')->increment('uses_count');

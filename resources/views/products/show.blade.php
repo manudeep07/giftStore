@@ -220,7 +220,7 @@
                         @if($product->stock <= 0)
                             Out of Stock
                         @else
-                            Add bespoke configuration · ₹<span x-text="quote.unit_price"></span>
+                            Checkout · ₹<span x-text="quote.unit_price"></span>
                         @endif
                     </button>
                     @guest
