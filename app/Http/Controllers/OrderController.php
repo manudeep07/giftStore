@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CancelOrderRequest;
 use App\Models\Order;
+use App\Services\OrderCancellationService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use RuntimeException;
 
 class OrderController extends Controller
 {
@@ -12,6 +16,7 @@ class OrderController extends Controller
     {
         $orders = $request->user()
             ->orders()
+            ->with('payment')
             ->latest()
             ->paginate(10);
 
@@ -22,7 +27,7 @@ class OrderController extends Controller
     {
         $this->authorize('view', $order);
 
-        $order->load(['items.product', 'payment']);
+        $order->load(['items.product', 'payment', 'refund']);
 
         return view('orders.show', compact('order'));
     }
@@ -34,5 +39,19 @@ class OrderController extends Controller
         $order->load(['items', 'user', 'payment']);
 
         return view('orders.invoice', compact('order'));
+    }
+
+    /** Customer cancels their own order (unpaid or paid-before-shipment). */
+    public function cancel(CancelOrderRequest $request, Order $order, OrderCancellationService $cancellations): RedirectResponse
+    {
+        try {
+            $cancellations->cancelByCustomer($order);
+        } catch (RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('orders.show', $order)
+            ->with('success', 'Order cancelled. You will receive a confirmation email shortly.');
     }
 }

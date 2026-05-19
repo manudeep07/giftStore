@@ -2,20 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CheckoutPaymentCallbackRequest;
 use App\Http\Requests\CheckoutRequest;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Payment;
 use App\Services\CartService;
+use App\Services\CheckoutOrderService;
 use App\Services\CouponService;
+use App\Services\PaymentFulfillmentService;
+use App\Services\RazorpayService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
- * Authenticated checkout converting bespoke cart lines into immutable orders.
+ * Authenticated checkout: pending order first, Razorpay capture second.
  */
 class CheckoutController extends Controller
 {
@@ -49,95 +49,138 @@ class CheckoutController extends Controller
                 'coupon' => $applied['coupon'],
                 'coupon_code' => session('checkout_coupon'),
             ],
+            'razorpayConfigured' => app(RazorpayService::class)->isConfigured(),
         ]);
     }
 
-    public function store(CheckoutRequest $request, CartService $carts, CouponService $coupons): RedirectResponse
-    {
+    public function store(
+        CheckoutRequest $request,
+        CartService $carts,
+        CheckoutOrderService $checkoutOrders,
+        RazorpayService $razorpay,
+        PaymentFulfillmentService $fulfillment,
+    ): RedirectResponse {
         $cart = $carts->getOrCreateCart($request)->load('items.product');
 
         if ($cart->items->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
-        $user = $request->user();
-        $subtotal = (float) $cart->subtotal();
+        if (! $razorpay->isConfigured()) {
+            return redirect()
+                ->route('checkout.index')
+                ->with('error', 'Payment gateway is not configured. Add Razorpay keys to .env (see HANDOFF.md).');
+        }
 
-        $couponCode = $request->validated('coupon_code') ?: session('checkout_coupon');
-        $applied = $coupons->apply($couponCode, $subtotal);
-        $discount = $applied['discount'];
-        $coupon = $applied['coupon'];
-
-        $taxRate = (float) config('customgift.tax_rate', 0);
-        $shipping = (float) config('customgift.shipping_flat', 0);
-
-        $taxable = max($subtotal - $discount, 0);
-        $tax = round($taxable * $taxRate, 2);
-        $total = max($taxable + $tax + $shipping, 0);
-
-        $order = DB::transaction(function () use ($request, $user, $cart, $subtotal, $discount, $tax, $shipping, $total, $coupon): Order {
-            /** @var Order $order */
-            $order = Order::query()->create([
-                'order_number' => 'CG-'.strtoupper(Str::random(10)),
-                'user_id' => $user->id,
-                'status' => 'pending',
-                'subtotal' => number_format($subtotal, 2, '.', ''),
-                'tax_amount' => number_format($tax, 2, '.', ''),
-                'discount_amount' => number_format($discount, 2, '.', ''),
-                'shipping_amount' => number_format($shipping, 2, '.', ''),
-                'total' => number_format($total, 2, '.', ''),
-                'coupon_id' => $coupon?->id,
-                'coupon_code' => $coupon?->code,
-                'shipping_name' => $request->validated('shipping_name'),
-                'shipping_email' => $request->validated('shipping_email'),
-                'shipping_phone' => $request->validated('shipping_phone'),
-                'shipping_address_line1' => $request->validated('shipping_address_line1'),
-                'shipping_address_line2' => $request->validated('shipping_address_line2'),
-                'shipping_city' => $request->validated('shipping_city'),
-                'shipping_state' => $request->validated('shipping_state'),
-                'shipping_postal' => $request->validated('shipping_postal'),
-                'shipping_country' => $request->validated('shipping_country'),
-                'notes' => $request->validated('notes'),
-            ]);
-
-            foreach ($cart->items as $item) {
-                OrderItem::query()->create([
-                    'order_id' => $order->id,
-                    'product_id' => $item->product_id,
-                    'product_name' => $item->product->name,
-                    'quantity' => $item->quantity,
-                    'customization_snapshot' => $item->customization_snapshot,
-                    'unit_price' => $item->unit_price,
-                    'line_total' => $item->line_total,
-                ]);
-
-                if ($item->product) {
-                    $item->product->decrement('stock', $item->quantity);
-                }
-            }
-
-            Payment::query()->create([
-                'order_id' => $order->id,
-                'provider' => 'placeholder',
-                'status' => 'paid',
-                'transaction_ref' => 'SIM-'.strtoupper(Str::random(12)),
-                'amount' => $order->total,
-                'meta' => ['note' => 'Swap this factory row for Razorpay/Stripe webhooks.'],
-            ]);
-
-            if ($coupon) {
-                $coupon->increment('uses_count');
-            }
-
-            $cart->items()->delete();
-
-            return $order;
-        });
+        ['order' => $order] = $checkoutOrders->createPendingOrder($request, $cart, $request->user());
 
         session()->forget('checkout_coupon');
 
+        try {
+            $razorpayOrder = $razorpay->createOrder($order);
+            $payment = $order->payment()->firstOrFail();
+            $fulfillment->attachRazorpayOrderId($payment, $razorpayOrder['id'], $razorpayOrder['amount']);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return redirect()
+                ->route('orders.show', $order)
+                ->with('error', 'Order saved but Razorpay could not be started. Retry payment from your order page.');
+        }
+
+        return redirect()
+            ->route('checkout.pay', $order)
+            ->with('info', 'Complete payment to confirm your order.');
+    }
+
+    public function pay(Order $order, RazorpayService $razorpay, PaymentFulfillmentService $fulfillment): View|RedirectResponse
+    {
+        $this->authorize('view', $order);
+
+        $order->load('payment');
+
+        $payment = $order->payment;
+
+        if (! $payment || $payment->status === 'paid') {
+            return redirect()
+                ->route('orders.show', $order)
+                ->with('success', 'This order is already paid.');
+        }
+
+        if (! $razorpay->isConfigured()) {
+            return redirect()
+                ->route('orders.show', $order)
+                ->with('error', 'Razorpay is not configured. Contact support or check HANDOFF.md.');
+        }
+
+        $meta = $payment->meta ?? [];
+        $razorpayOrderId = $meta['razorpay_order_id'] ?? null;
+        $amountPaise = (int) ($meta['razorpay_amount_paise'] ?? round((float) $order->total * 100));
+
+        if (! $razorpayOrderId) {
+            try {
+                $razorpayOrder = $razorpay->createOrder($order);
+                $fulfillment->attachRazorpayOrderId($payment, $razorpayOrder['id'], $razorpayOrder['amount']);
+                $razorpayOrderId = $razorpayOrder['id'];
+                $amountPaise = $razorpayOrder['amount'];
+            } catch (\Throwable $e) {
+                report($e);
+
+                return redirect()
+                    ->route('orders.show', $order)
+                    ->with('error', 'Unable to start Razorpay checkout. Please try again shortly.');
+            }
+        }
+
+        return view('checkout.pay', [
+            'order' => $order,
+            'razorpayKeyId' => config('services.razorpay.key_id'),
+            'razorpayOrderId' => $razorpayOrderId,
+            'amountPaise' => $amountPaise,
+            'callbackUrl' => route('checkout.payment.callback', $order),
+        ]);
+    }
+
+    public function callback(
+        CheckoutPaymentCallbackRequest $request,
+        Order $order,
+        RazorpayService $razorpay,
+        PaymentFulfillmentService $fulfillment,
+    ): RedirectResponse {
+        $order->load('payment');
+        $payment = $order->payment;
+
+        if ($payment?->status === 'paid') {
+            return redirect()
+                ->route('orders.show', $order)
+                ->with('success', 'Payment already confirmed.');
+        }
+
+        $razorpayOrderId = $request->validated('razorpay_order_id');
+        $razorpayPaymentId = $request->validated('razorpay_payment_id');
+        $razorpaySignature = $request->validated('razorpay_signature');
+
+        $storedOrderId = $payment?->meta['razorpay_order_id'] ?? null;
+        if ($storedOrderId && $storedOrderId !== $razorpayOrderId) {
+            return redirect()
+                ->route('checkout.pay', $order)
+                ->with('error', 'Payment does not match this order.');
+        }
+
+        try {
+            $razorpay->verifyPaymentSignature($razorpayOrderId, $razorpayPaymentId, $razorpaySignature);
+        } catch (\RuntimeException $e) {
+            report($e);
+
+            return redirect()
+                ->route('checkout.pay', $order)
+                ->with('error', 'Payment verification failed. You were not charged, or contact support with your receipt.');
+        }
+
+        $fulfillment->fulfill($order, $razorpayPaymentId, $razorpayOrderId);
+
         return redirect()
             ->route('orders.show', $order)
-            ->with('success', 'Order placed. Our artisans are on it.');
+            ->with('success', 'Payment received. Your order is confirmed!');
     }
 }

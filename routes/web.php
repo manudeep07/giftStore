@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\ReviewModerationController as AdminReviewControll
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\CheckoutCouponController;
+use App\Http\Controllers\RazorpayWebhookController;
 use App\Http\Controllers\GiftIdeasController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
@@ -51,11 +52,15 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
     Route::get('/checkout', [CheckoutController::class, 'create'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::get('/checkout/orders/{order}/pay', [CheckoutController::class, 'pay'])->name('checkout.pay');
+    Route::post('/checkout/orders/{order}/payment/callback', [CheckoutController::class, 'callback'])
+        ->name('checkout.payment.callback');
     Route::post('/checkout/coupon', [CheckoutCouponController::class, 'store'])->name('checkout.coupon.store');
     Route::delete('/checkout/coupon', [CheckoutCouponController::class, 'destroy'])->name('checkout.coupon.destroy');
 
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
 
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
@@ -89,6 +94,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::patch('orders/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
+    Route::post('orders/{order}/refund', [AdminOrderController::class, 'refund'])->name('orders.refund');
 
     Route::resource('coupons', AdminCouponController::class)->except(['show']);
 
@@ -98,5 +104,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::delete('reviews/{review}', [AdminReviewController::class, 'destroy'])
         ->name('reviews.destroy');
 });
+
+Route::post('/razorpay/webhook', RazorpayWebhookController::class)->name('razorpay.webhook');
 
 require __DIR__.'/auth.php';

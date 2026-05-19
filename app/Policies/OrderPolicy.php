@@ -27,4 +27,14 @@ class OrderPolicy
     {
         return $this->view($user, $order);
     }
+
+    public function cancel(User $user, Order $order): bool
+    {
+        return $order->user_id === $user->id && $order->canBeCancelledByCustomer();
+    }
+
+    public function refund(User $user, Order $order): bool
+    {
+        return $user->isAdmin() && $order->canBeRefundedByAdmin();
+    }
 }
