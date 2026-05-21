@@ -15,6 +15,7 @@ use App\Http\Controllers\RazorpayWebhookController;
 use App\Http\Controllers\GiftIdeasController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderReviewController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductQuoteController;
 use App\Http\Controllers\ProfileController;
@@ -63,6 +64,11 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
     Route::get('/orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
 
+    Route::get('/orders/{order}/items/{orderItem}/review', [OrderReviewController::class, 'create'])
+        ->name('orders.reviews.create');
+    Route::post('/orders/{order}/items/{orderItem}/review', [OrderReviewController::class, 'store'])
+        ->name('orders.reviews.store');
+
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
     Route::post('/wishlist/{product:slug}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
 
@@ -97,6 +103,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('orders/{order}/refund', [AdminOrderController::class, 'refund'])->name('orders.refund');
 
     Route::resource('coupons', AdminCouponController::class)->except(['show']);
+    Route::post('coupons/{coupon}/toggle', [AdminCouponController::class, 'toggle'])->name('coupons.toggle');
 
     Route::get('reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
     Route::post('reviews/{review}/approve', [AdminReviewController::class, 'approve'])

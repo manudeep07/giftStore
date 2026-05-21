@@ -6,21 +6,26 @@ use App\Http\Requests\StoreCartItemRequest;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Services\CartService;
+use App\Services\CouponService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CartController extends Controller
 {
-    public function index(Request $request, CartService $carts): View
+    public function index(Request $request, CartService $carts, CouponService $coupons): View
     {
         if ($request->user()) {
             $carts->mergeGuestCartFor($request->user(), $request);
         }
 
         $cart = $carts->getOrCreateCart($request)->load('items.product.images');
+        $subtotal = (float) $cart->subtotal();
 
-        return view('cart.index', compact('cart'));
+        $summary = $coupons->checkoutSummary($subtotal, session('checkout_coupon'));
+        $availableCoupons = $coupons->availableForSubtotal($subtotal);
+
+        return view('cart.index', compact('cart', 'summary', 'availableCoupons'));
     }
 
     public function store(StoreCartItemRequest $request, Product $product, CartService $carts): RedirectResponse

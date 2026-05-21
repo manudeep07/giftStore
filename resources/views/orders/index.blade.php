@@ -19,6 +19,7 @@
                         <th class="px-6 py-4">Payment</th>
                         <th class="px-6 py-4">Total</th>
                         <th class="px-6 py-4">Date</th>
+                        <th class="px-6 py-4">Reviews</th>
                         <th class="px-6 py-4"></th>
                     </tr>
                 </thead>
@@ -30,13 +31,31 @@
                             <td class="px-6 py-4 capitalize text-slate-600">{{ $order->payment?->status ?? '—' }}</td>
                             <td class="px-6 py-4 font-semibold text-slate-900">₹{{ number_format($order->total, 2) }}</td>
                             <td class="px-6 py-4 text-slate-500">{{ $order->created_at->format('M j, Y') }}</td>
+                            <td class="px-6 py-4">
+                                @if ($order->payment?->status === 'paid')
+                                    @php
+                                        $reviewItem = $order->items->first(fn ($item) => $item->product_id && ($purchased->canReview(auth()->user(), $item->product_id) || isset($userReviews[$item->product_id])));
+                                    @endphp
+                                    @if ($reviewItem && $reviewItem->product_id)
+                                        @if ($purchased->canReview(auth()->user(), $reviewItem->product_id))
+                                            <a href="{{ route('orders.reviews.create', [$order, $reviewItem]) }}" class="text-sm font-semibold text-emerald-700 hover:text-emerald-600">Write review</a>
+                                        @elseif ($userReviews->has($reviewItem->product_id))
+                                            <span class="text-xs text-slate-500">{{ $userReviews[$reviewItem->product_id]->is_approved ? 'Reviewed' : 'Pending' }}</span>
+                                        @endif
+                                    @else
+                                        <span class="text-xs text-slate-400">—</span>
+                                    @endif
+                                @else
+                                    <span class="text-xs text-slate-400">After payment</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 text-right">
                                 <a href="{{ route('orders.show', $order) }}" class="font-semibold text-slate-900 hover:text-slate-600">View</a>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-10 text-center text-slate-600">No orders yet. <a href="{{ route('shop.index') }}" class="font-semibold underline">Browse the shop</a></td>
+                            <td colspan="7" class="px-6 py-10 text-center text-slate-600">No orders yet. <a href="{{ route('shop.index') }}" class="font-semibold underline">Browse the shop</a></td>
                         </tr>
                     @endforelse
                 </tbody>

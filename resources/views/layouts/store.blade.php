@@ -27,7 +27,7 @@
 
                 <nav class="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
                     <a href="{{ route('shop.index') }}" class="transition hover:text-slate-900 {{ request()->routeIs('shop.*') ? 'text-slate-900' : '' }}">Shop</a>
-                    <a href="{{ route('gift.ideas') }}" class="transition hover:text-slate-900 {{ request()->routeIs('gift.ideas') ? 'text-slate-900' : '' }}">Gift ideas</a>
+                    <!-- <a href="{{ route('gift.ideas') }}" class="transition hover:text-slate-900 {{ request()->routeIs('gift.ideas') ? 'text-slate-900' : '' }}">Gift ideas</a> -->
                     @auth
                         @if(auth()->user()->isAdmin())
                             <a href="{{ route('admin.dashboard') }}" class="transition hover:text-slate-900">Admin</a>

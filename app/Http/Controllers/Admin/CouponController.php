@@ -3,9 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreCouponRequest;
+use App\Http\Requests\Admin\UpdateCouponRequest;
 use App\Models\Coupon;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CouponController extends Controller
@@ -22,24 +23,21 @@ class CouponController extends Controller
         return view('admin.coupons.create');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(StoreCouponRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'code' => ['required', 'string', 'max:64', 'unique:coupons,code'],
-            'type' => ['required', 'in:fixed,percent'],
-            'value' => ['required', 'numeric', 'min:0'],
-            'max_uses' => ['nullable', 'integer', 'min:1'],
-            'expires_at' => ['nullable', 'date'],
-            'is_active' => ['boolean'],
-        ]);
+        $data = $request->validated();
 
         Coupon::query()->create([
-            ...$data,
             'code' => strtoupper($data['code']),
+            'type' => $data['type'],
+            'value' => $data['value'],
+            'minimum_order_amount' => $data['minimum_order_amount'] ?? 0,
+            'max_uses' => $data['max_uses'] ?? null,
+            'expires_at' => $data['expires_at'] ?? null,
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        return redirect()->route('admin.coupons.index')->with('success', 'Coupon minted.');
+        return redirect()->route('admin.coupons.index')->with('success', 'Coupon created.');
     }
 
     public function edit(Coupon $coupon): View
@@ -47,30 +45,36 @@ class CouponController extends Controller
         return view('admin.coupons.edit', compact('coupon'));
     }
 
-    public function update(Request $request, Coupon $coupon): RedirectResponse
+    public function update(UpdateCouponRequest $request, Coupon $coupon): RedirectResponse
     {
-        $data = $request->validate([
-            'code' => ['required', 'string', 'max:64', 'unique:coupons,code,'.$coupon->id],
-            'type' => ['required', 'in:fixed,percent'],
-            'value' => ['required', 'numeric', 'min:0'],
-            'max_uses' => ['nullable', 'integer', 'min:1'],
-            'expires_at' => ['nullable', 'date'],
-            'is_active' => ['boolean'],
-        ]);
+        $data = $request->validated();
 
         $coupon->update([
-            ...$data,
             'code' => strtoupper($data['code']),
+            'type' => $data['type'],
+            'value' => $data['value'],
+            'minimum_order_amount' => $data['minimum_order_amount'] ?? 0,
+            'max_uses' => $data['max_uses'] ?? null,
+            'expires_at' => $data['expires_at'] ?? null,
             'is_active' => $request->boolean('is_active', true),
         ]);
 
-        return redirect()->route('admin.coupons.index')->with('success', 'Coupon tuned.');
+        return redirect()->route('admin.coupons.index')->with('success', 'Coupon updated.');
+    }
+
+    public function toggle(Coupon $coupon): RedirectResponse
+    {
+        $coupon->update(['is_active' => ! $coupon->is_active]);
+
+        $status = $coupon->is_active ? 'activated' : 'deactivated';
+
+        return back()->with('success', "Coupon {$status}.");
     }
 
     public function destroy(Coupon $coupon): RedirectResponse
     {
         $coupon->delete();
 
-        return redirect()->route('admin.coupons.index')->with('success', 'Coupon retired.');
+        return redirect()->route('admin.coupons.index')->with('success', 'Coupon deleted.');
     }
 }

@@ -272,9 +272,23 @@ class CustomGiftSeeder extends Seeder
             [
                 'type' => 'percent',
                 'value' => 10,
+                'minimum_order_amount' => 500,
                 'max_uses' => 500,
                 'uses_count' => 0,
                 'expires_at' => now()->addMonths(6),
+                'is_active' => true,
+            ],
+        );
+
+        Coupon::query()->updateOrCreate(
+            ['code' => 'FLAT200'],
+            [
+                'type' => 'fixed',
+                'value' => 200,
+                'minimum_order_amount' => 1500,
+                'max_uses' => 100,
+                'uses_count' => 0,
+                'expires_at' => now()->addMonths(3),
                 'is_active' => true,
             ],
         );

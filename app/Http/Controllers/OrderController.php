@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CancelOrderRequest;
 use App\Models\Order;
+use App\Models\Review;
 use App\Services\OrderCancellationService;
+use App\Services\PurchasedProductService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,24 +14,35 @@ use RuntimeException;
 
 class OrderController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, PurchasedProductService $purchased): View
     {
         $orders = $request->user()
             ->orders()
-            ->with('payment')
+            ->with(['payment', 'items.product'])
             ->latest()
             ->paginate(10);
 
-        return view('orders.index', compact('orders'));
+        $userReviews = Review::query()
+            ->where('user_id', $request->user()->id)
+            ->get()
+            ->keyBy('product_id');
+
+        return view('orders.index', compact('orders', 'userReviews', 'purchased'));
     }
 
-    public function show(Order $order): View
+    public function show(Order $order, PurchasedProductService $purchased): View
     {
         $this->authorize('view', $order);
 
         $order->load(['items.product', 'payment', 'refund']);
 
-        return view('orders.show', compact('order'));
+        $userReviews = Review::query()
+            ->where('user_id', $order->user_id)
+            ->whereIn('product_id', $order->items->pluck('product_id')->filter())
+            ->get()
+            ->keyBy('product_id');
+
+        return view('orders.show', compact('order', 'userReviews', 'purchased'));
     }
 
     public function invoice(Order $order): View

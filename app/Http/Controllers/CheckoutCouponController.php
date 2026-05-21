@@ -7,7 +7,7 @@ use App\Services\CouponService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-/** Session-backed coupon preview prior to POST /checkout. */
+/** Session-backed coupon preview for cart and checkout. */
 class CheckoutCouponController extends Controller
 {
     public function store(Request $request, CartService $carts, CouponService $coupons): RedirectResponse
@@ -18,16 +18,17 @@ class CheckoutCouponController extends Controller
 
         $cart = $carts->getOrCreateCart($request);
         $subtotal = (float) $cart->subtotal();
+        $code = $request->string('coupon_code')->toString();
 
-        $applied = $coupons->apply($request->string('coupon_code'), $subtotal);
+        $result = $coupons->validate($code, $subtotal);
 
-        if (! $applied['coupon']) {
-            return back()->with('error', 'Invalid or expired coupon.');
+        if (! $result['valid']) {
+            return back()->with('error', $result['message']);
         }
 
-        session(['checkout_coupon' => $applied['coupon']->code]);
+        session(['checkout_coupon' => $result['coupon']->code]);
 
-        return back()->with('success', 'Coupon applied to this checkout.');
+        return back()->with('success', 'Coupon '.$result['coupon']->code.' applied. You save ₹'.number_format($result['discount'], 2).'.');
     }
 
     public function destroy(Request $request): RedirectResponse

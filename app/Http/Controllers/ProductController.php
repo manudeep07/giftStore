@@ -18,27 +18,7 @@ class ProductController extends Controller
 
         $optionsByGroup = $product->customizationOptions->groupBy('option_group');
 
-        $defaults = [
-            'material' => optional($optionsByGroup->get('material'))?->firstWhere('is_default', true)?->value_key
-                ?? optional($optionsByGroup->get('material'))?->first()?->value_key,
-            'size' => optional($optionsByGroup->get('size'))?->firstWhere('is_default', true)?->value_key
-                ?? optional($optionsByGroup->get('size'))?->first()?->value_key,
-            'color' => optional($optionsByGroup->get('color'))?->firstWhere('is_default', true)?->value_key
-                ?? optional($optionsByGroup->get('color'))?->first()?->value_key,
-            'font' => optional($optionsByGroup->get('font'))?->firstWhere('is_default', true)?->value_key
-                ?? optional($optionsByGroup->get('font'))?->first()?->value_key,
-            'gift_wrap' => optional($optionsByGroup->get('gift_wrap'))?->firstWhere('is_default', true)?->value_key
-                ?? optional($optionsByGroup->get('gift_wrap'))?->first()?->value_key,
-            'engraving' => optional($optionsByGroup->get('engraving'))?->firstWhere('is_default', true)?->value_key
-                ?? optional($optionsByGroup->get('engraving'))?->first()?->value_key,
-            'addons' => collect($optionsByGroup->get('addon'))
-                ->where('is_default', true)
-                ->pluck('value_key')
-                ->values()
-                ->all(),
-            'has_image_upload' => false,
-            'custom_text' => '',
-        ];
+        $defaults = $this->customDefaults($optionsByGroup, $request);
 
         $recent = collect(session('recent_products', []))->reject(fn ($id) => (int) $id === $product->id);
         $recent->prepend($product->id);
@@ -67,6 +47,61 @@ class ProductController extends Controller
             'customDefaults' => $defaults,
             'initialQuote' => $initialQuote,
             'optionMeta' => $optionMeta,
+            'resumedFromCart' => $request->hasAny([
+                'material', 'size', 'color', 'font', 'gift_wrap', 'engraving', 'addons', 'custom_text', 'has_image_upload',
+            ]),
         ]);
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<string, \Illuminate\Support\Collection<int, \App\Models\CustomizationOption>>  $optionsByGroup
+     * @return array<string, mixed>
+     */
+    private function customDefaults($optionsByGroup, Request $request): array
+    {
+        $defaults = [
+            'material' => optional($optionsByGroup->get('material'))?->firstWhere('is_default', true)?->value_key
+                ?? optional($optionsByGroup->get('material'))?->first()?->value_key,
+            'size' => optional($optionsByGroup->get('size'))?->firstWhere('is_default', true)?->value_key
+                ?? optional($optionsByGroup->get('size'))?->first()?->value_key,
+            'color' => optional($optionsByGroup->get('color'))?->firstWhere('is_default', true)?->value_key
+                ?? optional($optionsByGroup->get('color'))?->first()?->value_key,
+            'font' => optional($optionsByGroup->get('font'))?->firstWhere('is_default', true)?->value_key
+                ?? optional($optionsByGroup->get('font'))?->first()?->value_key,
+            'gift_wrap' => optional($optionsByGroup->get('gift_wrap'))?->firstWhere('is_default', true)?->value_key
+                ?? optional($optionsByGroup->get('gift_wrap'))?->first()?->value_key,
+            'engraving' => optional($optionsByGroup->get('engraving'))?->firstWhere('is_default', true)?->value_key
+                ?? optional($optionsByGroup->get('engraving'))?->first()?->value_key,
+            'addons' => collect($optionsByGroup->get('addon'))
+                ->where('is_default', true)
+                ->pluck('value_key')
+                ->values()
+                ->all(),
+            'has_image_upload' => false,
+            'custom_text' => '',
+        ];
+
+        foreach (['material', 'size', 'color', 'font', 'gift_wrap', 'engraving'] as $key) {
+            if ($request->filled($key)) {
+                $defaults[$key] = $request->string($key)->toString();
+            }
+        }
+
+        if ($request->filled('custom_text')) {
+            $defaults['custom_text'] = $request->string('custom_text')->toString();
+        }
+
+        if ($request->has('addons')) {
+            $addons = $request->input('addons');
+            $defaults['addons'] = is_array($addons)
+                ? array_values($addons)
+                : array_values(array_filter(explode(',', (string) $addons)));
+        }
+
+        if ($request->boolean('has_image_upload')) {
+            $defaults['has_image_upload'] = true;
+        }
+
+        return $defaults;
     }
 }

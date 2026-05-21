@@ -28,27 +28,13 @@ class CheckoutController extends Controller
         }
 
         $subtotal = (float) $cart->subtotal();
-        $applied = $coupons->apply(session('checkout_coupon'), $subtotal);
-
-        $taxRate = (float) config('customgift.tax_rate', 0);
-        $shipping = (float) config('customgift.shipping_flat', 0);
-
-        $discount = $applied['discount'];
-        $taxable = max($subtotal - $discount, 0);
-        $tax = round($taxable * $taxRate, 2);
-        $total = max($taxable + $tax + $shipping, 0);
+        $summary = $coupons->checkoutSummary($subtotal, session('checkout_coupon'));
+        $availableCoupons = $coupons->availableForSubtotal($subtotal);
 
         return view('checkout.index', [
             'cart' => $cart,
-            'summary' => [
-                'subtotal' => $subtotal,
-                'discount' => $discount,
-                'tax' => $tax,
-                'shipping' => $shipping,
-                'total' => $total,
-                'coupon' => $applied['coupon'],
-                'coupon_code' => session('checkout_coupon'),
-            ],
+            'summary' => $summary,
+            'availableCoupons' => $availableCoupons,
             'razorpayConfigured' => app(RazorpayService::class)->isConfigured(),
         ]);
     }

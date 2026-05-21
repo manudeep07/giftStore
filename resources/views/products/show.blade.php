@@ -78,6 +78,12 @@
         </div>
 
         <div class="space-y-8">
+            @if ($resumedFromCart ?? false)
+                <p class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                    Your cart customizations were restored. Re-upload artwork if you had attached a file.
+                </p>
+            @endif
+
             <div class="space-y-3">
                 <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $product->category?->name }}</p>
                 <div class="flex flex-wrap items-start justify-between gap-4">
@@ -220,7 +226,7 @@
                         @if($product->stock <= 0)
                             Out of Stock
                         @else
-                            Checkout · ₹<span x-text="quote.unit_price"></span>
+                            Add to cart · ₹<span x-text="quote.unit_price"></span>
                         @endif
                     </button>
                     @guest
@@ -230,12 +236,8 @@
             </div>
 
             <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                <div class="flex items-center justify-between gap-4">
-                    <h2 class="font-[family-name:var(--font-serif)] text-2xl font-semibold text-slate-900" style="--font-serif:'Fraunces',ui-serif,Georgia,serif;">Reviews</h2>
-                    @auth
-                        <span class="text-xs font-semibold uppercase tracking-wide text-slate-500">Share feedback</span>
-                    @endauth
-                </div>
+                <h2 class="font-[family-name:var(--font-serif)] text-2xl font-semibold text-slate-900" style="--font-serif:'Fraunces',ui-serif,Georgia,serif;">Customer reviews</h2>
+                <p class="mt-2 text-sm text-slate-600">Read what buyers say. To write a review, open <a href="{{ auth()->check() ? route('orders.index') : route('login') }}" class="font-semibold text-slate-900 underline">My Orders</a> after your purchase is paid.</p>
 
                 <div class="mt-6 space-y-4">
                     @forelse ($reviews as $review)
@@ -250,33 +252,9 @@
                             <p class="mt-2 text-sm text-slate-600">{{ $review->body }}</p>
                         </article>
                     @empty
-                        <p class="text-sm text-slate-600">No public reviews yet — be the artisan’s first advocate.</p>
+                        <p class="text-sm text-slate-600">No public reviews yet.</p>
                     @endforelse
                 </div>
-
-                @auth
-                    <form action="{{ route('products.reviews.store', $product) }}" method="post" class="mt-6 space-y-4 rounded-2xl border border-dashed border-slate-200 p-4">
-                        @csrf
-                        <div class="grid gap-4 sm:grid-cols-2">
-                            <label class="text-sm font-semibold text-slate-800">Rating
-                                <select name="rating" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                                    @for ($i = 5; $i >= 1; $i--)
-                                        <option value="{{ $i }}">{{ $i }} ★</option>
-                                    @endfor
-                                </select>
-                            </label>
-                            <label class="text-sm font-semibold text-slate-800">Title
-                                <input name="title" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="Headline" />
-                            </label>
-                        </div>
-                        <label class="text-sm font-semibold text-slate-800">Notes
-                            <textarea name="body" rows="3" class="mt-2 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" placeholder="How did customization feel?"></textarea>
-                        </label>
-                        <button class="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm" type="submit">Submit for moderation</button>
-                    </form>
-                @else
-                    <p class="mt-6 text-sm text-slate-600"><a href="{{ route('login') }}" class="font-semibold text-slate-900 underline">Login</a> to leave a review.</p>
-                @endauth
             </section>
         </div>
     </div>

@@ -66,6 +66,10 @@
                                 <button class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700" type="submit">Remove</button>
                             </form>
                             <p class="text-right text-lg font-semibold text-slate-900">₹{{ number_format($item->line_total, 2) }}</p>
+                            <a href="{{ \App\Support\CustomizationPresenter::resumeUrl($item->product, $item->customization_snapshot) }}"
+                               class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-900 hover:border-slate-300">
+                                Continue customization
+                            </a>
                         </div>
                     </div>
                 </article>
@@ -76,10 +80,20 @@
             @endforelse
         </div>
 
-        <aside class="w-full rounded-3xl border border-slate-200 bg-white p-6 shadow-lg lg:max-w-sm lg:sticky lg:top-28">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Summary</p>
-            <p class="mt-4 text-4xl font-semibold text-slate-900">₹{{ number_format((float) $cart->subtotal(), 2) }}</p>
-            <p class="mt-2 text-sm text-slate-600">Tax & coupons finalize during authenticated checkout.</p>
+        <aside class="w-full space-y-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-lg lg:max-w-md lg:sticky lg:top-28">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Summary</p>
+                <p class="mt-4 text-4xl font-semibold text-slate-900">₹{{ number_format($summary['total'] ?? (float) $cart->subtotal(), 2) }}</p>
+                @if (($summary['discount'] ?? 0) > 0)
+                    <p class="mt-2 text-sm text-emerald-700">Includes ₹{{ number_format($summary['discount'], 2) }} coupon savings</p>
+                @else
+                    <p class="mt-2 text-sm text-slate-600">Tax & shipping calculated at checkout.</p>
+                @endif
+            </div>
+
+            @auth
+                <x-available-coupons :available-coupons="$availableCoupons" :summary="$summary" />
+            @endauth
 
             @auth
                 <a href="{{ route('checkout.index') }}" class="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-900/15 transition hover:bg-slate-800 {{ $cart->items->isEmpty() ? 'pointer-events-none opacity-40' : '' }}">
@@ -96,7 +110,7 @@
             @endauth
 
             <a href="{{ route('shop.index') }}" class="mt-4 inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 hover:border-slate-300">
-                Continue customizing
+                Browse more products
             </a>
         </aside>
     </div>

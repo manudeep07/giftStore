@@ -66,12 +66,26 @@
             <div class="mt-6 space-y-4">
                 @foreach ($order->items as $item)
                     <article class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                        <div class="flex flex-wrap justify-between gap-4">
-                            <div>
-                                <p class="font-semibold text-slate-900">{{ $item->product_name }}</p>
-                                <p class="text-xs uppercase tracking-wide text-slate-500">Qty {{ $item->quantity }}</p>
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div class="min-w-0 flex-1">
+                                <x-customization-summary
+                                    :snapshot="$item->customization_snapshot"
+                                    :product-name="$item->product_name"
+                                    :quantity="$item->quantity"
+                                    :line-total="$item->line_total"
+                                />
                             </div>
-                            <p class="text-lg font-semibold text-slate-900">₹{{ number_format($item->line_total, 2) }}</p>
+                            @if ($item->product_id && $order->payment?->status === 'paid')
+                                <div class="shrink-0 text-right">
+                                    @if ($purchased->canReview(auth()->user(), $item->product_id))
+                                        <a href="{{ route('orders.reviews.create', [$order, $item]) }}" class="inline-flex rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-500">Write review</a>
+                                    @elseif ($userReviews->has($item->product_id))
+                                        <span class="text-xs font-semibold text-slate-600">
+                                            {{ $userReviews[$item->product_id]->is_approved ? 'Review published' : 'Review pending approval' }}
+                                        </span>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     </article>
                 @endforeach

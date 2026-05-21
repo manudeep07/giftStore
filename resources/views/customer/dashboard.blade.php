@@ -11,7 +11,7 @@
 
             <div class="mt-8 grid gap-4 sm:grid-cols-2">
                 <a href="{{ route('orders.index') }}" class="rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm transition hover:border-slate-300">
-                    <p class="text-xs uppercase tracking-wide text-slate-500">Orders</p>
+                    <p class="text-xs uppercase tracking-wide text-slate-500">My Orders</p>
                     <p class="mt-2 text-2xl font-semibold text-slate-900">{{ auth()->user()->orders()->count() }}</p>
                     <p class="text-xs text-slate-500">Historical receipts</p>
                 </a>
@@ -28,13 +28,6 @@
             </div>
         </section>
 
-        <aside class="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Ops radar</p>
-            <ul class="mt-6 space-y-4 text-sm text-slate-600">
-                <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span> Cart snapshots persist JSON customization for QA-friendly replays.</li>
-                <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-indigo-500"></span> Verified checkout unlocks GST-aware totals & coupons.</li>
-                <li class="flex gap-3"><span class="mt-1 h-2 w-2 rounded-full bg-amber-500"></span> Need enterprise SSO? Drop SAML middleware beside Breeze.</li>
-            </ul>
-        </aside>
+        
     </div>
 @endsection
